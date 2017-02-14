@@ -1,5 +1,6 @@
 import aiohttp
 from sanic.log import log
+import warnings
 
 HOST = '127.0.0.1'
 PORT = 42101
@@ -19,6 +20,11 @@ async def local_request(method, uri, cookies=None, *args, **kwargs):
 def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
                         debug=False, server_kwargs={},
                         *request_args, **request_kwargs):
+    warnings.warn(
+        "Use of sanic_endpoint_test will be deprecated in"
+        "version 1.0.  Please use the `test_client` object "
+        "on the app object.", DeprecationWarning)
+
     results = [None, None]
     exceptions = []
 

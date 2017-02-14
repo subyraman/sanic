@@ -41,18 +41,18 @@ def handler_exception(request, exception):
 
 
 def test_invalid_usage_exception_handler():
-    request, response = sanic_endpoint_test(exception_handler_app, uri='/1')
+    request, response = exception_handler_app.test_client.get('/1')
     assert response.status == 400
 
 
 def test_server_error_exception_handler():
-    request, response = sanic_endpoint_test(exception_handler_app, uri='/2')
+    request, response = exception_handler_app.test_client.get('/2')
     assert response.status == 200
     assert response.text == 'OK'
 
 
 def test_not_found_exception_handler():
-    request, response = sanic_endpoint_test(exception_handler_app, uri='/3')
+    request, response = exception_handler_app.test_client.get('/3')
     assert response.status == 200
 
 
@@ -64,8 +64,8 @@ def test_text_exception__handler():
 
 
 def test_html_traceback_output_in_debug_mode():
-    request, response = sanic_endpoint_test(
-        exception_handler_app, uri='/4', debug=True)
+    request, response = exception_handler_app.test_client.get(
+        '/4', debug=True)
     assert response.status == 500
     soup = BeautifulSoup(response.body, 'html.parser')
     html = str(soup)
@@ -81,5 +81,5 @@ def test_html_traceback_output_in_debug_mode():
 
 
 def test_inherited_exception_handler():
-    request, response = sanic_endpoint_test(exception_handler_app, uri='/5')
+    request, response = exception_handler_app.test_client.get('/5')
     assert response.status == 200

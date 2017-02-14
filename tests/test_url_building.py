@@ -5,7 +5,6 @@ from sanic import Sanic
 from sanic.response import text
 from sanic.views import HTTPMethodView
 from sanic.blueprints import Blueprint
-from sanic.utils import sanic_endpoint_test
 from sanic.exceptions import URLBuildError
 
 import string
@@ -33,8 +32,7 @@ def test_simple_url_for_getting(simple_app):
         url = simple_app.url_for(letter)
 
         assert url == '/{}'.format(letter)
-        request, response = sanic_endpoint_test(
-            simple_app, uri=url)
+        request, response = simple_app.test_client.get(url)
         assert response.status == 200
         assert response.text == letter
 

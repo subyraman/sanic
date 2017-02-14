@@ -73,8 +73,7 @@ def test_not_found_exception(exception_app):
 
 def test_handled_unhandled_exception(exception_app):
     """Test that an exception not built into sanic is handled"""
-    request, response = sanic_endpoint_test(
-        exception_app, uri='/divide_by_zero')
+    request, response = exception_app.test_client.get('/divide_by_zero')
     assert response.status == 500
     soup = BeautifulSoup(response.body, 'html.parser')
     assert soup.h1.text == 'Internal Server Error'
@@ -86,17 +85,16 @@ def test_handled_unhandled_exception(exception_app):
 
 def test_exception_in_exception_handler(exception_app):
     """Test that an exception thrown in an error handler is handled"""
-    request, response = sanic_endpoint_test(
-        exception_app, uri='/error_in_error_handler_handler')
+    request, response = exception_app.test_client.get(
+        '/error_in_error_handler_handler')
     assert response.status == 500
     assert response.body == b'An error occurred while handling an error'
 
 
 def test_exception_in_exception_handler_debug_off(exception_app):
     """Test that an exception thrown in an error handler is handled"""
-    request, response = sanic_endpoint_test(
-        exception_app,
-        uri='/error_in_error_handler_handler',
+    request, response = exception_app.test_client.get(
+        '/error_in_error_handler_handler',
         debug=False)
     assert response.status == 500
     assert response.body == b'An error occurred while handling an error'
@@ -104,9 +102,8 @@ def test_exception_in_exception_handler_debug_off(exception_app):
 
 def test_exception_in_exception_handler_debug_off(exception_app):
     """Test that an exception thrown in an error handler is handled"""
-    request, response = sanic_endpoint_test(
-        exception_app,
-        uri='/error_in_error_handler_handler',
+    request, response = exception_app.test_client.get(
+        '/error_in_error_handler_handler',
         debug=True)
     assert response.status == 500
     assert response.body.startswith(b'Exception raised in exception ')

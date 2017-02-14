@@ -17,7 +17,7 @@ def test_storage():
     def handler(request):
         return json({ 'user': request.get('user'), 'sidekick': request.get('sidekick') })
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
 
     response_json = loads(response.text)
     assert response_json['user'] == 'sanic'

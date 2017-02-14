@@ -29,7 +29,7 @@ def test_log():
         log.info(rand_string)
         return text('hello')
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
     log_text = log_stream.getvalue()
     assert rand_string in log_text
 

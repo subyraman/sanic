@@ -22,7 +22,7 @@ def test_middleware_request():
     async def handler(request):
         return text('OK')
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
 
     assert response.text == 'OK'
     assert type(results[0]) is Request
@@ -46,7 +46,7 @@ def test_middleware_response():
     async def handler(request):
         return text('OK')
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
 
     assert response.text == 'OK'
     assert type(results[0]) is Request
@@ -65,7 +65,7 @@ def test_middleware_override_request():
     async def handler(request):
         return text('FAIL')
 
-    response = sanic_endpoint_test(app, gather_request=False)
+    response = app.test_client.get('/', gather_request=False)
 
     assert response.status == 200
     assert response.text == 'OK'
@@ -82,7 +82,7 @@ def test_middleware_override_response():
     async def handler(request):
         return text('FAIL')
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
 
     assert response.status == 200
     assert response.text == 'OK'
@@ -122,7 +122,7 @@ def test_middleware_order():
     async def handler(request):
         return text('OK')
 
-    request, response = sanic_endpoint_test(app)
+    request, response = app.test_client.get('/')
 
     assert response.status == 200
     assert order == [1,2,3,4,5,6]
