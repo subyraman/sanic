@@ -1,7 +1,6 @@
 from sanic import Sanic
 from sanic.response import text
 from sanic.exceptions import InvalidUsage, ServerError, NotFound
-from sanic.utils import sanic_endpoint_test
 from bs4 import BeautifulSoup
 
 exception_handler_app = Sanic('test_exception_handler')
@@ -57,8 +56,7 @@ def test_not_found_exception_handler():
 
 
 def test_text_exception__handler():
-    request, response = sanic_endpoint_test(
-        exception_handler_app, uri='/random')
+    request, response = exception_handler_app.test_client.get('/random')
     assert response.status == 200
     assert response.text == 'OK'
 

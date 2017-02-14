@@ -2,7 +2,6 @@ import pytest
 
 from sanic import Sanic
 from sanic.response import text, redirect
-from sanic.utils import sanic_endpoint_test
 
 
 @pytest.fixture
@@ -84,7 +83,7 @@ def test_get_then_redirect_follow_redirect(redirect_app):
 
 
 def test_chained_redirect(redirect_app):
-    """Test sanic_endpoint_test is working for redirection"""
+    """Test test_client is working for redirection"""
     request, response = redirect_app.test_client.get('/1')
     assert request.url.endswith('/1')
     assert response.status == 200

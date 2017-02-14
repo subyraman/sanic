@@ -1,6 +1,5 @@
 from sanic import Sanic
 from sanic.response import json
-from sanic.utils import sanic_endpoint_test
 from ujson import loads
 
 

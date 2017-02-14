@@ -2,7 +2,6 @@ from json import loads as json_loads, dumps as json_dumps
 from sanic import Sanic
 from sanic.request import Request
 from sanic.response import json, text, HTTPResponse
-from sanic.utils import sanic_endpoint_test
 
 
 # ------------------------------------------------------------ #

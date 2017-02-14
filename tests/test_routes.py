@@ -3,7 +3,6 @@ import pytest
 from sanic import Sanic
 from sanic.response import text
 from sanic.router import RouteExists, RouteDoesNotExist
-from sanic.utils import sanic_endpoint_test
 
 
 # ------------------------------------------------------------ #

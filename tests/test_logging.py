@@ -3,7 +3,6 @@ import uuid
 from sanic.response import text
 from sanic import Sanic
 from io import StringIO
-from sanic.utils import sanic_endpoint_test
 import logging
 
 logging_format = '''module: %(module)s; \

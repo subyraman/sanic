@@ -33,6 +33,6 @@ async def handler_2(request):
 
 
 def test_default_server_error_request_timeout():
-    request, response = request_timeout_app.test_client.get('/1')
+    request, response = request_timeout_default_app.test_client.get('/1')
     assert response.status == 408
     assert response.text == 'Error: Request Timeout'

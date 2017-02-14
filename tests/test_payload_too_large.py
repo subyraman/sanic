@@ -1,7 +1,6 @@
 from sanic import Sanic
 from sanic.response import text
 from sanic.exceptions import PayloadTooLarge
-from sanic.utils import sanic_endpoint_test
 
 data_received_app = Sanic('data_received')
 data_received_app.config.REQUEST_MAX_SIZE = 1
