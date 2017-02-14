@@ -16,5 +16,5 @@ def sanic_endpoint_test(app, method='get', uri='/', gather_request=True,
 
     test_client = TestClient(app)
     return test_client._sanic_endpoint_test(
-        method, uri, gather_request=gather_request, debug, server_kwargs
+        method, uri, gather_request, debug, server_kwargs,
         *request_args, **request_kwargs)
