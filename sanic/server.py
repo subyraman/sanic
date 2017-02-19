@@ -169,12 +169,14 @@ class HttpProtocol(asyncio.Protocol):
     # -------------------------------------------- #
     async def write_response(self, response):
         try:
+            keep_alive = (
+                self.parser.should_keep_alive() and not self.signal.stopped)
 
             if isinstance(response, StreamedHTTPResponse):
+                response.transport = self.transport
                 await response.start_stream()
+                print('in write response, finished')
             else:
-                keep_alive = (
-                    self.parser.should_keep_alive() and not self.signal.stopped)
                 self.transport.write(
                     response.output(
                         self.request.version, keep_alive, self.request_timeout))
@@ -193,9 +195,11 @@ class HttpProtocol(asyncio.Protocol):
                 "Writing response failed, connection closed {}".format(
                     repr(e)))
         finally:
-            if not keep_alive:
+            if isinstance(response, StreamedHTTPResponse) or not keep_alive:
+                print('closing the transport')
                 self.transport.close()
             else:
+                print('recording info')
                 # Record that we received data
                 self._last_request_time = current_time
                 self.cleanup()

@@ -417,10 +417,6 @@ class Sanic:
                     response = HTTPResponse(
                         "An error occurred while handling an error")
 
-        if isinstance(response, StreamedHTTPResponse):
-            print('this is an instance of streamed response')
-            response.transport = request.transport
-
         await response_callback(response)
 
     # -------------------------------------------------------------------- #

@@ -73,6 +73,8 @@ ALL_STATUS_CODES = {
     511: b'Network Authentication Required'
 }
 
+CRLF = b'0\r\n\r\n'
+
 
 class StreamedHTTPResponse:
     def __init__(self, body_or_fn=None, status=200, headers=None,
@@ -97,20 +99,22 @@ class StreamedHTTPResponse:
         self.status = status
         self.headers = headers or {}
         self._cookies = None
-        self._queue = asyncio.Queue()
 
     async def write(self, data):
         print('writing data', data)
-        ret = "{}\r\n{}".format(len(data), data).encode()
-
+        ret = "{}\r\n{}\r\n".format(len(data), data).encode()
         self.transport.write(ret)
 
     async def start_stream(self):
+        print('writing headers!')
+        headers = self.get_headers()
+        print(headers)
+        self.transport.write(headers)
         print('starting to stream!')
         await self.body_fn(self)
 
     async def finish(self):
-        self.transport.close()
+        self.transport.write(b'0\r\n\r\n')
 
     def get_headers(
             self, version="1.1", keep_alive=False, keep_alive_timeout=None):
@@ -123,7 +127,6 @@ class StreamedHTTPResponse:
         #     'Content-Length', len(self.body))
 
         self.headers['Transfer-Encoding'] = 'chunked'
-        
         self.headers['Content-Type'] = self.headers.get(
             'Content-Type', self.content_type)
         headers = b''
@@ -144,13 +147,11 @@ class StreamedHTTPResponse:
             status = ALL_STATUS_CODES.get(self.status)
 
         return (b'HTTP/%b %d %b\r\n'
-                b'Connection: %b\r\n'
                 b'%b'
                 b'%b\r\n') % (
             version.encode(),
             self.status,
             status,
-            b'keep-alive' if keep_alive else b'close',
             timeout_header,
             headers
         )
@@ -311,12 +312,10 @@ async def file(location, mime_type=None, headers=None, _range=None):
 
 
 async def sample_fn(response):
-    print('in samplefn!')
     await response.write('foo')
-    await asyncio.sleep(1)
+    await asyncio.sleep(.5)
     await response.write('bar')
-    await asyncio.sleep(1)
-
+    await asyncio.sleep(.5)
     await response.finish()
 
 
