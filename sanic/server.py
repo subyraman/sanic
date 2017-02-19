@@ -21,7 +21,7 @@ except ImportError:
 
 from sanic.log import log
 from sanic.request import Request
-from sanic.response import StreamedHTTPResponse
+from sanic.response import StreamingHTTPResponse
 from sanic.exceptions import (
     RequestTimeout, PayloadTooLarge, InvalidUsage, ServerError)
 
@@ -169,13 +169,13 @@ class HttpProtocol(asyncio.Protocol):
     # -------------------------------------------- #
     async def write_response(self, response):
         try:
+            should_stream = isinstance(response, StreamingHTTPResponse)
             keep_alive = (
                 self.parser.should_keep_alive() and not self.signal.stopped)
 
-            if isinstance(response, StreamedHTTPResponse):
+            if should_stream:
                 response.transport = self.transport
                 await response.start_stream()
-                print('in write response, finished')
             else:
                 self.transport.write(
                     response.output(
@@ -195,8 +195,11 @@ class HttpProtocol(asyncio.Protocol):
                 "Writing response failed, connection closed {}".format(
                     repr(e)))
         finally:
-            if isinstance(response, StreamedHTTPResponse) or not keep_alive:
-                print('closing the transport')
+            if should_stream or not keep_alive:
+                if should_stream:
+                    # add the CRLF needed to close out a chunked transfer
+                    self.transport.write(b'0\r\n\r\n')
+
                 self.transport.close()
             else:
                 print('recording info')

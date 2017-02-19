@@ -15,7 +15,7 @@ from sanic.handlers import ErrorHandler
 from sanic.log import log
 from sanic.response import HTTPResponse
 from sanic.router import Router
-from sanic.response import StreamedHTTPResponse
+from sanic.response import StreamingHTTPResponse
 from sanic.server import serve, serve_multiple, HttpProtocol
 from sanic.static import register as static_register
 from sanic.testing import TestClient

@@ -73,48 +73,24 @@ ALL_STATUS_CODES = {
     511: b'Network Authentication Required'
 }
 
-CRLF = b'0\r\n\r\n'
 
-
-class StreamedHTTPResponse:
-    def __init__(self, body_or_fn=None, status=200, headers=None,
+class StreamingHTTPResponse:
+    def __init__(self, streaming_fn, status=200, headers=None,
                  content_type='text/plain', body_bytes=b''):
         self.content_type = content_type
-
-        # if isinstance(body_or_fn, str):
-        #     if body_or_fn is not None:
-        #         try:
-        #             # Try to encode it regularly
-        #             self.body = body_or_fn.encode()
-        #         except AttributeError:
-        #             # Convert it to a str if you can't
-        #             self.body = str(body_or_fn).encode()
-        #     else:
-        #         self.body = body_bytes
-
-        # if isinstance(body_or_fn, callable):
-        #     self.body_fn = body_or_fn
-
-        self.body_fn = body_or_fn
+        self.streaming_fn = streaming_fn
         self.status = status
         self.headers = headers or {}
         self._cookies = None
 
     async def write(self, data):
-        print('writing data', data)
         ret = "{}\r\n{}\r\n".format(len(data), data).encode()
         self.transport.write(ret)
 
     async def start_stream(self):
-        print('writing headers!')
         headers = self.get_headers()
-        print(headers)
         self.transport.write(headers)
-        print('starting to stream!')
-        await self.body_fn(self)
-
-    async def finish(self):
-        self.transport.write(b'0\r\n\r\n')
+        await self.streaming_fn(self)
 
     def get_headers(
             self, version="1.1", keep_alive=False, keep_alive_timeout=None):
@@ -311,16 +287,10 @@ async def file(location, mime_type=None, headers=None, _range=None):
                         body_bytes=out_stream)
 
 
-async def sample_fn(response):
-    await response.write('foo')
-    await asyncio.sleep(.5)
-    await response.write('bar')
-    await asyncio.sleep(.5)
-    await response.finish()
-
-
-def stream():
-    return StreamedHTTPResponse(sample_fn, status=200)
+def stream(
+        streaming_fn,
+        content_type="text/plain; charset=utf-8"):
+    return StreamingHTTPResponse(streaming_fn, status=200)
 
 
 def redirect(to, headers=None, status=302,
