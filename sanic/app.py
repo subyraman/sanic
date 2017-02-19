@@ -15,6 +15,7 @@ from sanic.handlers import ErrorHandler
 from sanic.log import log
 from sanic.response import HTTPResponse
 from sanic.router import Router
+from sanic.response import StreamedHTTPResponse
 from sanic.server import serve, serve_multiple, HttpProtocol
 from sanic.static import register as static_register
 from sanic.testing import TestClient
@@ -416,7 +417,11 @@ class Sanic:
                     response = HTTPResponse(
                         "An error occurred while handling an error")
 
-        response_callback(response)
+        if isinstance(response, StreamedHTTPResponse):
+            print('this is an instance of streamed response')
+            response.transport = request.transport
+
+        await response_callback(response)
 
     # -------------------------------------------------------------------- #
     # Testing

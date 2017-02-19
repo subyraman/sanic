@@ -21,6 +21,7 @@ except ImportError:
 
 from sanic.log import log
 from sanic.request import Request
+from sanic.response import StreamedHTTPResponse
 from sanic.exceptions import (
     RequestTimeout, PayloadTooLarge, InvalidUsage, ServerError)
 
@@ -159,20 +160,24 @@ class HttpProtocol(asyncio.Protocol):
     def on_message_complete(self):
         if self.request.body:
             self.request.body = b''.join(self.request.body)
+
         self._request_handler_task = self.loop.create_task(
             self.request_handler(self.request, self.write_response))
 
     # -------------------------------------------- #
     # Responding
     # -------------------------------------------- #
-
-    def write_response(self, response):
-        keep_alive = (
-            self.parser.should_keep_alive() and not self.signal.stopped)
+    async def write_response(self, response):
         try:
-            self.transport.write(
-                response.output(
-                    self.request.version, keep_alive, self.request_timeout))
+
+            if isinstance(response, StreamedHTTPResponse):
+                await response.start_stream()
+            else:
+                keep_alive = (
+                    self.parser.should_keep_alive() and not self.signal.stopped)
+                self.transport.write(
+                    response.output(
+                        self.request.version, keep_alive, self.request_timeout))
         except AttributeError:
             log.error(
                 ('Invalid response object for url {}, '

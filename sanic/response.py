@@ -1,3 +1,4 @@
+import asyncio
 from mimetypes import guess_type
 from os import path
 from ujson import dumps as json_dumps
@@ -73,6 +74,93 @@ ALL_STATUS_CODES = {
 }
 
 
+class StreamedHTTPResponse:
+    def __init__(self, body_or_fn=None, status=200, headers=None,
+                 content_type='text/plain', body_bytes=b''):
+        self.content_type = content_type
+
+        # if isinstance(body_or_fn, str):
+        #     if body_or_fn is not None:
+        #         try:
+        #             # Try to encode it regularly
+        #             self.body = body_or_fn.encode()
+        #         except AttributeError:
+        #             # Convert it to a str if you can't
+        #             self.body = str(body_or_fn).encode()
+        #     else:
+        #         self.body = body_bytes
+
+        # if isinstance(body_or_fn, callable):
+        #     self.body_fn = body_or_fn
+
+        self.body_fn = body_or_fn
+        self.status = status
+        self.headers = headers or {}
+        self._cookies = None
+        self._queue = asyncio.Queue()
+
+    async def write(self, data):
+        print('writing data', data)
+        ret = "{}\r\n{}".format(len(data), data).encode()
+
+        self.transport.write(ret)
+
+    async def start_stream(self):
+        print('starting to stream!')
+        await self.body_fn(self)
+
+    async def finish(self):
+        self.transport.close()
+
+    def get_headers(
+            self, version="1.1", keep_alive=False, keep_alive_timeout=None):
+        # This is all returned in a kind-of funky way
+        # We tried to make this as fast as possible in pure python
+        timeout_header = b''
+        if keep_alive and keep_alive_timeout is not None:
+            timeout_header = b'Keep-Alive: %d\r\n' % keep_alive_timeout
+        # self.headers['Content-Length'] = self.headers.get(
+        #     'Content-Length', len(self.body))
+
+        self.headers['Transfer-Encoding'] = 'chunked'
+        
+        self.headers['Content-Type'] = self.headers.get(
+            'Content-Type', self.content_type)
+        headers = b''
+        for name, value in self.headers.items():
+            try:
+                headers += (
+                    b'%b: %b\r\n' % (
+                        name.encode(), value.encode('utf-8')))
+            except AttributeError:
+                headers += (
+                    b'%b: %b\r\n' % (
+                        str(name).encode(), str(value).encode('utf-8')))
+
+        # Try to pull from the common codes first
+        # Speeds up response rate 6% over pulling from all
+        status = COMMON_STATUS_CODES.get(self.status)
+        if not status:
+            status = ALL_STATUS_CODES.get(self.status)
+
+        return (b'HTTP/%b %d %b\r\n'
+                b'Connection: %b\r\n'
+                b'%b'
+                b'%b\r\n') % (
+            version.encode(),
+            self.status,
+            status,
+            b'keep-alive' if keep_alive else b'close',
+            timeout_header,
+            headers
+        )
+
+    @property
+    def cookies(self):
+        if self._cookies is None:
+            self._cookies = CookieJar(self.headers)
+        return self._cookies
+
 class HTTPResponse:
     __slots__ = ('body', 'status', 'content_type', 'headers', '_cookies')
 
@@ -94,7 +182,8 @@ class HTTPResponse:
         self.headers = headers or {}
         self._cookies = None
 
-    def output(self, version="1.1", keep_alive=False, keep_alive_timeout=None):
+    def output(
+            self, version="1.1", keep_alive=False, keep_alive_timeout=None):
         # This is all returned in a kind-of funky way
         # We tried to make this as fast as possible in pure python
         timeout_header = b''
@@ -164,8 +253,9 @@ def text(body, status=200, headers=None,
     :param content_type:
         the content type (string) of the response
     """
-    return HTTPResponse(body, status=status, headers=headers,
-                        content_type=content_type)
+    return HTTPResponse(
+        body, status=status, headers=headers,
+        content_type=content_type)
 
 
 def raw(body, status=200, headers=None,
@@ -218,6 +308,20 @@ async def file(location, mime_type=None, headers=None, _range=None):
                         headers=headers,
                         content_type=mime_type,
                         body_bytes=out_stream)
+
+
+async def sample_fn(response):
+    print('in samplefn!')
+    await response.write('foo')
+    await asyncio.sleep(1)
+    await response.write('bar')
+    await asyncio.sleep(1)
+
+    await response.finish()
+
+
+def stream():
+    return StreamedHTTPResponse(sample_fn, status=200)
 
 
 def redirect(to, headers=None, status=302,
